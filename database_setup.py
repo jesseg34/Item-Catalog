@@ -35,7 +35,7 @@ class Category(Base):
     def serialize(self):
         return {
             'id': self.id,
-            'category': self.category
+            'category': self.category,
         }
 
 class Food(Base):
@@ -43,7 +43,17 @@ class Food(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    category_Id = Column(Integer, ForeignKey('categories.id'))
+    description = Column(String)
+    category_id = Column(Integer, ForeignKey('categories.id'))
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'category_id': self.category_id
+        }
 
 engine = create_engine('sqlite:///catalog.db')
 Base.metadata.create_all(engine)

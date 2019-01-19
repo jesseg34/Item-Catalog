@@ -21,11 +21,6 @@ import requests
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 
-#TODO:
-# Define category and item models
-# Create Add new category page
-# create category post method
-
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())[
     'web']['client_id']
 
@@ -35,8 +30,10 @@ app = Flask(__name__)
 engine = create_engine('sqlite:///catalog.db')
 Base.metadata.bind = engine
 
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
+# Seems to be a problem with this.
+# Will initialize in each utilized method per Udacity knowledge base question 11878
+# DBSession = sessionmaker(bind=engine)
+# session = DBSession()
 
 
 # Helper Methods
@@ -46,100 +43,211 @@ def BuildNewState():
                     for x in range(32))
     return state
 
-# Login Routes
 
-# For restricting access
-# if 'username' not in login_session:
-#     return redirect('/login')
-
-#API
+# API
 # Food Category Routes
+
 @app.route('/api/v1/categories')
 def getCategories():
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
     results = session.query(Category).all()
-    return jsonify(categories = [i.serialize for i in results])
+    return jsonify(categories=[i.serialize for i in results])
+
 
 @app.route('/api/v1/categories/<int:id>')
 def getCategory(id):
-    results = session.query(Category).get(id)
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
 
-    if results is None:
-        return jsonify({'error':'Category not found.'})
+    category = session.query(Category).get(id)
 
-    return jsonify(results)
+    if category is None:
+        return jsonify({'error': 'Category not found.'}), 400
+
+    return jsonify(category=category.serialize)
+
 
 @app.route('/api/v1/categories', methods=['POST'])
 def addCategory():
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
 
     if 'username' not in login_session:
         return redirect('/login')
 
     if (request.form['category'] is None):
-        response = make_response(json.dumps('Category parameter required.'), 400)
+        response = make_response(json.dumps(
+            'Category parameter required.'), 400)
         response.headers['Content-Type'] = 'application/json'
         return response
 
-    category = Category(category = request.form['category'])
+    category = Category(category=request.form['category'])
     session.add(category)
     session.commit()
 
     if (request.form.get('render-html') is not None):
         return render_template('categories.html')
     else:
-        return jsonify(category = category.serialize)
+        return jsonify(category=category.serialize)
+
 
 @app.route('/api/v1/categories/<int:id>', methods=['PUT'])
 def updateCategory(id):
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
     if 'username' not in login_session:
         return redirect('/login')
 
     category = session.query(Category).get(id)
 
     if category is None:
-        return jsonify({'error':'Category not found.'}), 400
-
-    print(request.form)
+        return jsonify({'error': 'Category not found.'}), 400
 
     if request.form['update-category']:
-        print("oh hi there")
         category.category = request.form['update-category']
         session.commit()
-        return jsonify(category = category.serialize)
+        return jsonify(category=category.serialize)
     return jsonify({'Notice': 'No records were updated'}), 400
+
 
 @app.route('/api/v1/categories/<int:id>', methods=['DELETE'])
 def deleteCategory(id):
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
     if 'username' not in login_session:
         return redirect('/login')
 
     category = session.query(Category).get(id)
 
     if category is None:
-        return jsonify({'error':'Category not found.'}), 400
+        return jsonify({'error': 'Category not found.'}), 400
 
     session.delete(category)
     session.commit()
 
-    return jsonify({'success':'The category has been deleted'})
+    return jsonify({'success': 'The category has been deleted'})
 
 
 # Food Routes
-@app.route('/api/v1/')
+@app.route('/api/v1/food')
+def getAllFood():
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    results = session.query(Food).all()
+    return jsonify(food=[i.serialize for i in results])
+
+
+@app.route('/api/v1/food/<int:id>')
+def getFood(id):
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    food = session.query(Food).get(id)
+
+    if food is None:
+        return jsonify({'error': 'Food not found.'}), 400
+
+    return jsonify(food=food.serialize)
+
+
+@app.route('/api/v1/food', methods=['POST'])
+def addFood():
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    if 'username' not in login_session:
+        return redirect('/login')
+
+    if (request.form['insert-name'] is None):
+        response = make_response(json.dumps(
+            'Food name parameter required.'), 400)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    food = Food(name=request.form['insert-name'],
+                description=request.form['insert-description'],
+                category_id=request.form['insert-category'])
+    session.add(food)
+    session.commit()
+
+    if (request.form.get('render-html') is not None):
+        return render_template('food.html')
+    else:
+        return jsonify(food=food.serialize)
+
+
+@app.route('/api/v1/food/<int:id>', methods=['PUT'])
+def updateFood(id):
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+    print(id)
+    if 'username' not in login_session:
+        return redirect('/login')
+
+    food = session.query(Food).get(id)
+
+    if food is None:
+        return jsonify({'error': 'Food not found.'}), 400
+
+    if request.form['update-food']:
+        food.name = request.form['update-food']
+    if request.form['update-category']:
+        food.category_id = request.form['update-category']
+    if request.form['update-description']:
+        food.description = request.form['update-description']
+
+    session.commit()
+    return jsonify(food=food.serialize)
+
+
+@app.route('/api/v1/food/<int:id>', methods=['DELETE'])
+def deleteFood(id):
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    if 'username' not in login_session:
+        return redirect('/login')
+
+    food = session.query(Food).get(id)
+
+    if food is None:
+        return jsonify({'error': 'Food not found.'}), 400
+
+    session.delete(food)
+    session.commit()
+
+    return jsonify({'success': 'The food has been deleted'})
 
 # Views
+
+
 @app.route('/')
 def displayHome():
     return render_template('home.html')
 
+
 @app.route('/categories')
 def displayCategories():
     return render_template('categories.html')
+
+
+@app.route('/food')
+def displayFood():
+    return render_template('food.html')
+
 
 @app.route('/login')
 def displayLogin():
     state = BuildNewState()
     login_session['state'] = state
     return render_template('login.html', STATE=state)
+
+# Login Routes
 
 
 @app.route('/gconnect', methods=['POST'])
@@ -261,6 +369,7 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
     return response
 
+
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
     if request.args.get('state') != login_session['state']:
@@ -333,13 +442,16 @@ def fbdisconnect():
     del login_session['facebook_id']
 
     print(result)
-    
+
     return "you have been logged out"
 
 # User Helper Functions
 
 
 def createUser(login_session):
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
     newUser = User(name=login_session['username'], email=login_session[
                    'email'])
     session.add(newUser)
@@ -349,6 +461,9 @@ def createUser(login_session):
 
 
 def getUserInfo(user_id):
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
     user = session.query(User).filter_by(id=user_id).one()
     return user
 

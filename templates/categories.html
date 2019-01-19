@@ -8,7 +8,7 @@
                 <div id="select-group" class="form-group">
                     <h5>Existing Items</h5>
                     <label for="categories">Categories</label>
-                    <select id="categories" class="form-control" id="exampleFormControlSelect1">
+                    <select id="categories" class="form-control">
                         <option value="No Categories">No Categories</option>
                     </select>
                 </div>
@@ -20,7 +20,7 @@
             <div id="edit-group" hidden>
                 <div class="form-group">
                     <h5>Edit Category</h5>
-                    <label for="category">Category</label>
+                    <label for="update-category">Category</label>
                     <input id="update-category" name="update-category" class="form-control" type="text" />
                 </div>
                 <div clas="form-group">
@@ -75,26 +75,6 @@
                 alert("There was a problem fetching the categories.");
             }
         });
-    }
-
-    function AddNewCategory() {
-        alert('test');
-        if ($('#category').text.length > 0) {
-            $.ajax({
-                type: 'POST',
-                url: '/api/v1/categories',
-                data: $('new-form').serialize(),
-                success: function (results) {
-                    FetchCategories();
-                },
-                error: function (err) {
-                    console.log(err);
-                    alert("There was a problem adding the category.");
-                }
-            });
-        } else {
-            alert('You must enter a category to add.');
-        }
     }
 
     function InitEdit() {
