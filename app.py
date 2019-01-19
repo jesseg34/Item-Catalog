@@ -3,10 +3,12 @@ from flask import session as login_session
 from flask import make_response
 from flask import request
 from flask import flash
+from flask import redirect
+from flask import jsonify
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, User
+from database_setup import Base, User, Category, Food
 
 from database_setup import Base
 
@@ -50,6 +52,73 @@ def BuildNewState():
 # if 'username' not in login_session:
 #     return redirect('/login')
 
+#API
+# Food Category Routes
+@app.route('/api/v1/categories')
+def getCategories():
+    results = session.query(Category).all()
+    return jsonify(categories = [i.serialize for i in results])
+
+@app.route('/api/v1/categories/<int:id>')
+def getCategory(id):
+    results = session.query(Category).get(id)
+
+    if results is None:
+        return jsonify({'error':'Category not found.'})
+
+    return jsonify(results)
+
+@app.route('/api/v1/categories', methods=['POST'])
+def addCategory():
+    if 'username' not in login_session:
+        return redirect('/login')
+
+    if (request.form['category'] is None):
+        response = make_response(json.dumps('Category parameter required.'), 400)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    category = Category(category = request.form['category'])
+    session.add(category)
+    session.commit()
+    return jsonify(category = category.serialize)
+
+@app.route('/api/v1/categories/<int:id>', methods=['PUT'])
+def updateCategory(id):
+    if 'username' not in login_session:
+        return redirect('/login')
+
+    category = session.query(Category).get(id)
+
+    if category is None:
+        return jsonify({'error':'Category not found.'})
+
+    if request.form['category']:
+        category.name = request.form['category']
+        session.commit()
+        return jsonify(category = category.serialize)
+    return jsonify({'Notice': 'No records were updated'})
+
+@app.route('/api/v1/categories/<int:id>', methods=['DELETE'])
+def deleteCategory():
+    if 'username' not in login_session:
+        return redirect('/login')
+
+    category = session.query(Category).get(id)
+
+    if category is None:
+        return jsonify({'error':'Category not found.'})
+
+    session.delete(category)
+    session.commit()
+
+    return jsonify({'success':'The category has been deleted'})
+
+
+# Food Routes
+@app.route('/api/v1/')
+
+# Views
 @app.route('/')
 def displayHome():
     return render_template('home.html')
@@ -176,7 +245,7 @@ def gdisconnect():
         return response
     else:
         response = make_response(json.dumps(
-            'Failed to revoke token for given user.', 400))
+            'Failed to revoke token for given user.'))
         response.headers['Content-Type'] = 'application/json'
     return response
 
@@ -199,7 +268,7 @@ def fbconnect():
     result = h.request(url, 'GET')[1]
 
     # Use token to get user info from API
-    userinfo_url = "https://graph.facebook.com/v2.8/me"
+    #userinfo_url = "https://graph.facebook.com/v2.8/me"
     '''
         Due to the formatting for the result from the server token exchange we have to
         split the token first on commas and select the first index which gives us the key : value

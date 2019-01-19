@@ -1,8 +1,10 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy import create_engine
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
+
 
 class User(Base):
     __tablename__ = 'users'
@@ -14,12 +16,34 @@ class User(Base):
 
     @property
     def serialize(self):
-        return { 
+        return {
             'id': self.id,
             'name': self.name,
             'email': self.email,
             'picture': self.picture
         }
+
+
+class Category(Base):
+    __tablename__ = 'categories'
+
+    id = Column(Integer, primary_key=True)
+    category = Column(String)
+    food = relationship("Food")
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'category': self.category
+        }
+
+class Food(Base):
+    __tablename__ = 'food'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    category_Id = Column(Integer, ForeignKey('categories.id'))
 
 engine = create_engine('sqlite:///catalog.db')
 Base.metadata.create_all(engine)
