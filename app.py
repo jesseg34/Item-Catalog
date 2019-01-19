@@ -20,16 +20,12 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 
 #TODO:
-# Create a default page html
-# Add logout button
 # Define category and item models
 # Create Add new category page
 # create category post method
 
-
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())[
     'web']['client_id']
-
 
 # Setup flask
 app = Flask(__name__)
@@ -135,7 +131,6 @@ def gconnect():
     data = answer.json()
 
     login_session['username'] = data['name']
-    # login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
     # Add user to database if they don't already exist
@@ -149,9 +144,6 @@ def gconnect():
     output += '<h1>Welcome, '
     output += login_session['username']
     output += '!</h1>'
-    output += '<img src="'
-    # output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
 
     return output
@@ -179,7 +171,6 @@ def gdisconnect():
         del login_session['gplus_id']
         del login_session['username']
         del login_session['email']
-        # del login_session['picture']
         response = make_response(json.dumps('Successfully disconnected.'), 200)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -231,15 +222,6 @@ def fbconnect():
     # The token must be stored in the login_session in order to properly logout
     login_session['access_token'] = token
 
-    # TODO: Get rid of the pictures for this app. We don't need it
-    # Get user picture
-    # url = 'https://graph.facebook.com/v2.8/me?access_token=%s&fields=name,id,email' % token
-    # h = httplib2.Http()
-    # result = h.request(url, 'GET')[1]
-    # data = json.loads(result)
-
-    # login_session['picture'] = data["data"]["url"]
-
     # see if user exists
     user_id = getUserID(login_session['email'])
     if not user_id:
@@ -249,11 +231,7 @@ def fbconnect():
     output = ''
     output += '<h1>Welcome, '
     output += login_session['username']
-
     output += '!</h1>'
-    output += '<img src="'
-    # output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
 
     flash("Now logged in as %s" % login_session['username'])
     return output
