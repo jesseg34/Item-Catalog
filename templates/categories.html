@@ -1,0 +1,147 @@
+{% extends "master.html" %}
+{% block content %}
+<h2>Catalog Categories</h2>
+<div class="row">
+    <div id="existing-container" class="col-sm-5 col-lg-4 m-1 p-2 card" hidden>
+        <form id="existing-form">
+            <div id="select-group">
+                <div id="select-group" class="form-group">
+                    <h5>Existing Items</h5>
+                    <label for="categories">Categories</label>
+                    <select id="categories" class="form-control" id="exampleFormControlSelect1">
+                        <option value="No Categories">No Categories</option>
+                    </select>
+                </div>
+                <div id="options" class="form-group" hidden>
+                    <button id="edit" type="button" onclick="InitEdit()" class="btn btn-primary">Edit</button>
+                    <button id="delete" type="button" onclick="DeleteItem()" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+            <div id="edit-group" hidden>
+                <div class="form-group">
+                    <h5>Edit Category</h5>
+                    <label for="category">Category</label>
+                    <input id="update-category" name="update-category" class="form-control" type="text" />
+                </div>
+                <div clas="form-group">
+                    <button type="button" onclick="EditItem()" class="btn btn-primary">Update</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col-sm-5 col-lg-4 m-1 p-2 card">
+        <form id="new-form" method="POST" action="/api/v1/categories">
+            <div class="form-group">
+                <h5>New Category</h5>
+                <label for="category">Category</label>
+                <input id="category" name="category" class="form-control" type="text" />
+            </div>
+            <div class="form-group">
+                <button id="add" type="submit" class="btn btn-primary">Insert</button>
+            </div>
+            <!-- Tells the API to render the template instead of returning JSON -->
+            <input type="hidden" name="render-html" />
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+{% block js %}
+<script>
+    $(FetchCategories());
+
+    function FetchCategories() {
+        $.ajax({
+            type: 'GET',
+            url: '/api/v1/categories',
+            processData: false,
+            success: function (result) {
+                if (result) {
+                    if (result.categories.length > 0) {
+                        let items = [];
+                        $.each(result.categories, (key, value) => {
+                            items.push('<option value="' + value.id + '">' + value.category + '</optoin>');
+                        });
+                        $('#categories').html(items.join(''));
+                        $('#existing-container').attr('hidden', false);
+                        $('#options').attr('hidden', false);
+                    }
+                } else {
+                    alert("There was a problem fetching the categories.");
+                }
+            },
+            error: function (err) {
+                console.log(err);
+                alert("There was a problem fetching the categories.");
+            }
+        });
+    }
+
+    function AddNewCategory() {
+        alert('test');
+        if ($('#category').text.length > 0) {
+            $.ajax({
+                type: 'POST',
+                url: '/api/v1/categories',
+                data: $('new-form').serialize(),
+                success: function (results) {
+                    FetchCategories();
+                },
+                error: function (err) {
+                    console.log(err);
+                    alert("There was a problem adding the category.");
+                }
+            });
+        } else {
+            alert('You must enter a category to add.');
+        }
+    }
+
+    function InitEdit() {
+        $('#select-group').attr('hidden', true);
+        $('#edit-group').attr('hidden', false);
+        $('#update-category').val($('#categories').find(':selected').text());
+    }
+
+    function EditItem() {
+        var selected = $('#categories').find(':selected')
+
+        $.ajax({
+            type: 'PUT',
+            url: '/api/v1/categories/' + selected.val(),
+            data: $('#existing-form').serialize(),
+            success: function (results) {
+                console.log("Update successful.");
+                FetchCategories();
+                $('#select-group').attr('hidden', false);
+                $('#edit-group').attr('hidden', true);
+            },
+            error: function (err) {
+                console.log(err);
+                alert("There was a problem updating the category.");
+            }
+        });
+    }
+
+    function DeleteItem() {
+        if (!confirm("Are you sure? This action may delete any items associated with the category.")) {
+            return false;
+        }
+
+        var selected = $('#categories').find(':selected')
+
+        $.ajax({
+            type: 'DELETE',
+            url: '/api/v1/categories/' + selected.val(),
+            success: function (results) {
+                console.log("Delete successful.");
+                FetchCategories();
+            },
+            error: function (err) {
+                console.log(err);
+                alert("There was a problem deleting the category.");
+            }
+        });
+    }
+</script>
+{% endblock %}

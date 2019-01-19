@@ -70,6 +70,7 @@ def getCategory(id):
 
 @app.route('/api/v1/categories', methods=['POST'])
 def addCategory():
+
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -81,7 +82,11 @@ def addCategory():
     category = Category(category = request.form['category'])
     session.add(category)
     session.commit()
-    return jsonify(category = category.serialize)
+
+    if (request.form.get('render-html') is not None):
+        return render_template('categories.html')
+    else:
+        return jsonify(category = category.serialize)
 
 @app.route('/api/v1/categories/<int:id>', methods=['PUT'])
 def updateCategory(id):
@@ -91,23 +96,26 @@ def updateCategory(id):
     category = session.query(Category).get(id)
 
     if category is None:
-        return jsonify({'error':'Category not found.'})
+        return jsonify({'error':'Category not found.'}), 400
 
-    if request.form['category']:
-        category.name = request.form['category']
+    print(request.form)
+
+    if request.form['update-category']:
+        print("oh hi there")
+        category.category = request.form['update-category']
         session.commit()
         return jsonify(category = category.serialize)
-    return jsonify({'Notice': 'No records were updated'})
+    return jsonify({'Notice': 'No records were updated'}), 400
 
 @app.route('/api/v1/categories/<int:id>', methods=['DELETE'])
-def deleteCategory():
+def deleteCategory(id):
     if 'username' not in login_session:
         return redirect('/login')
 
     category = session.query(Category).get(id)
 
     if category is None:
-        return jsonify({'error':'Category not found.'})
+        return jsonify({'error':'Category not found.'}), 400
 
     session.delete(category)
     session.commit()
@@ -122,6 +130,10 @@ def deleteCategory():
 @app.route('/')
 def displayHome():
     return render_template('home.html')
+
+@app.route('/categories')
+def displayCategories():
+    return render_template('categories.html')
 
 @app.route('/login')
 def displayLogin():

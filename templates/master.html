@@ -27,7 +27,7 @@
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="navbar-nav">
                     <!-- Add each category here -->
-                    <a class="nav-item nav-link text-white" href="#">Categories</a>
+                    <a class="nav-item nav-link text-white" href="/categories">Categories</a>
                     <a class="nav-item nav-link text-white" href="#">Food</a>
                 </div>
             </div>
@@ -52,6 +52,8 @@
         crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
         crossorigin="anonymous"></script>
+        {% block js %}
+        {% endblock %}
 </body>
 
 </html>
