@@ -1,0 +1,107 @@
+{% extends "master.html" %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-6 offset-sm-3 text-center">
+            <h1>Login</h1>
+            <div class="jumbotron text-center card card-container text-white">
+                <div id="result" class="text-info"></div>
+                <div class="form-group">
+                    <div id="signinButton">
+                        <span class="g-signin" data-scope="openid email" data-clientid="290797280491-mo1j34kub0imh0pojq6869n17mvm70r7.apps.googleusercontent.com"
+                            data-redirecturi="postmessage" data-accesstype="offline" data-cookiepolicy="single_host_origin"
+                            data-callback="googleSignInCallback" data-approvalprompt="force">
+                        </span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <fb:login-button scope="public_profile,email" onlogin="sendTokenToServer();">
+                        <a href='javascript:sendTokenToServer()'>Login with Facebook</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function googleSignInCallback(authResult) {
+        if (authResult['code']) {
+            $('#googleSignIn').attr('style', 'display:none');
+
+            $.ajax({
+                type: 'POST',
+                url: '/gconnect?state={{STATE}}',
+                processData: false,
+                contentType: 'application/octet-stream; charset=utf-8',
+                data: authResult['code'],
+                success: function (result) {
+                    if (result) {
+                        alert('success')
+                        $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
+                        setTimeout(function () {
+                            window.location.href = "/";
+                        }, 4000);
+
+                    } else if (authResult['error']) {
+                        console.log('There was an error: ' + authResult['error']);
+                    } else {
+                        $('#result').html(
+                            'Failed to make a server-side call. Check your configuration and console.');
+                    }
+                },
+                error: function (err) {
+                    console.log(err);
+                    alert("There was a problem logging in.");
+                }
+            });
+        }
+    }
+</script>
+
+<script>
+    window.fbAsyncInit = function () {
+        FB.init({
+            appId: '745489052496478',
+            cookie: true,
+            xfbml: true,
+            version: 'v3.2'
+        });
+        FB.AppEvents.logPageView();
+    };
+
+    (function (d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) { return; }
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+    function sendTokenToServer() {
+        var access_token = FB.getAuthResponse()['accessToken'];
+        console.log(access_token)
+        console.log('Welcome!  Fetching your information.... ');
+        FB.api('/me', function (response) {
+            console.log('Successful login for: ' + response.name);
+            $.ajax({
+                type: 'POST',
+                url: '/fbconnect?state={{STATE}}',
+                processData: false,
+                data: access_token,
+                contentType: 'application/octet-stream; charset=utf-8',
+                success: function (result) {
+                    if (result) {
+                        $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
+                        setTimeout(function () {
+                            window.location.href = "/";
+                        }, 4000);
+
+                    } else {
+                        $('#result').html('Failed to make a server-side call. Check your configuration and console.');
+                    }
+                }
+
+            });
+        });
+    }
+</script>
+{% endblock %}
