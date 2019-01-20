@@ -1,44 +1,51 @@
 {% extends "master.html" %}
 {% block content %}
-<div class="row">
-    <div class="col-sm-6 col-md-4 col-lg-3 mt-1">
-        <div class="card" style="width: 18rem;">
-            <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
-                    card's
-                    content.</p>
-                <a href="#" class="card-link">Card link</a>
-                <a href="#" class="card-link">Another link</a>
-            </div>
-        </div>
+<div id="category-container">
+
+</div>
+<div id="category-template" class="row equal pb-2 m-2 border-bottom" hidden="true">
+    <div class="col-12">
+        <h4 class="category"></h4>
     </div>
-    <div class="col-sm-6 col-md-4 col-lg-3 mt-1">
-        <div class="card" style="width: 18rem;">
-            <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
-                    card's
-                    content.</p>
-                <a href="#" class="card-link">Card link</a>
-                <a href="#" class="card-link">Another link</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-md-4 col-lg-3 mt-1">
-        <div class="card" style="width: 18rem;">
-            <div class="card-body">
-                <h5 class="card-title">Card title</h5>
-                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
-                    card's
-                    content.</p>
-                <a href="#" class="card-link">Card link</a>
-                <a href="#" class="card-link">Another link</a>
-            </div>
+</div>
+<div id="food-card-template" hidden="true" class="col-sm-6 col-md-4 col-lg-3 mt-1">
+    <div class="card" style="width: 18rem;">
+        <div class="card-body">
+            <h5 class="food-name card-title"></h5>
+            <p class="food-description card-text"></p>
         </div>
     </div>
 </div>
 {% endblock %}
+{% block js %}
+<script>
+    $(PopulateCatelog());
+    function PopulateCatelog() {
+        $.ajax({
+            type: 'GET',
+            url: '/api/v1/categories/food',
+            success: function (results) {
+                $.each(results.Categories, function (key, category) {
+                    var categoryTemplate = $('#category-template').clone();
+                    categoryTemplate.attr('id', category.category);
+                    categoryTemplate.find('.category').text(category.category);
+                    $('#category-container').append(categoryTemplate);
+                    categoryTemplate.attr('hidden', false);
+
+                    $.each(category.Food, function (key, food) {
+                        var foodTemplate = $('#food-card-template').clone();
+                        foodTemplate.find('.food-name.card-title').text(food.name);
+                        foodTemplate.find('.food-description.card-text').text(food.description);
+                        categoryTemplate.append(foodTemplate);
+                        foodTemplate.attr('hidden', false);
+                    });
+                });
+            },
+            error: function (err) {
+                console.log(err);
+                alert("There was a problem fetching the categories and food.");
+            }
+        });
+    }
+</script>
+{% endblock%}

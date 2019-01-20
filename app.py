@@ -7,7 +7,7 @@ from flask import redirect
 from flask import jsonify
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, joinedload
 from database_setup import Base, User, Category, Food
 
 from database_setup import Base
@@ -31,7 +31,7 @@ engine = create_engine('sqlite:///catalog.db')
 Base.metadata.bind = engine
 
 # Seems to be a problem with this.
-# Will initialize in each utilized method per Udacity knowledge base question 11878
+# Will init in each utilized method per Udacity knowledge base question 11878
 # DBSession = sessionmaker(bind=engine)
 # session = DBSession()
 
@@ -75,7 +75,7 @@ def addCategory():
     session = DBSession()
 
     if 'username' not in login_session:
-        return redirect('/login')
+        return jsonify({'error': 'You must be logged in to modify data.'}), 401
 
     if (request.form['category'] is None):
         response = make_response(json.dumps(
@@ -99,7 +99,7 @@ def updateCategory(id):
     session = DBSession()
 
     if 'username' not in login_session:
-        return redirect('/login')
+        return jsonify({'error': 'You must be logged in to modify data.'}), 401
 
     category = session.query(Category).get(id)
 
@@ -119,7 +119,7 @@ def deleteCategory(id):
     session = DBSession()
 
     if 'username' not in login_session:
-        return redirect('/login')
+        return jsonify({'error': 'You must be logged in to modify data.'}), 401
 
     category = session.query(Category).get(id)
 
@@ -130,6 +130,17 @@ def deleteCategory(id):
     session.commit()
 
     return jsonify({'success': 'The category has been deleted'})
+
+
+@app.route('/api/v1/categories/food')
+def getFoodByCategory():
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    results = session.query(Category).options(joinedload(Category.food)).all()
+    return jsonify(Categories=[dict(c.serialize,
+                                    Food=[i.serialize for i in c.food])
+                               for c in results])
 
 
 # Food Routes
@@ -161,7 +172,7 @@ def addFood():
     session = DBSession()
 
     if 'username' not in login_session:
-        return redirect('/login')
+        return jsonify({'error': 'You must be logged in to modify data.'}), 401
 
     if (request.form['insert-name'] is None):
         response = make_response(json.dumps(
@@ -187,7 +198,7 @@ def updateFood(id):
     session = DBSession()
     print(id)
     if 'username' not in login_session:
-        return redirect('/login')
+        return jsonify({'error': 'You must be logged in to modify data.'}), 401
 
     food = session.query(Food).get(id)
 
@@ -211,7 +222,7 @@ def deleteFood(id):
     session = DBSession()
 
     if 'username' not in login_session:
-        return redirect('/login')
+        return jsonify({'error': 'You must be logged in to modify data.'}), 401
 
     food = session.query(Food).get(id)
 
@@ -248,6 +259,8 @@ def displayLogin():
     return render_template('login.html', STATE=state)
 
 # Login Routes
+# Oauth code was written while taking the Udacity Full-stack Back-end courses.
+# Credit goes to Udacity for oauth implementation
 
 
 @app.route('/gconnect', methods=['POST'])
@@ -303,7 +316,7 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
+        response = make_response(json.dumps('User is already connected.'),
                                  200)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -325,14 +338,14 @@ def gconnect():
     # Add user to database if they don't already exist
     user_id = getUserID(data['email'])
 
-    if not user_id:
+    if user_id is None:
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
 
     output = ''
-    output += '<h1>Welcome, '
+    output += '<h3>Welcome, '
     output += login_session['username']
-    output += '!</h1>'
+    output += '!</h3>'
     flash("you are now logged in as %s" % login_session['username'])
 
     return output
@@ -350,7 +363,8 @@ def gdisconnect():
     print('In gdisconnect access token is %s', access_token)
     print('User name is: ')
     print(login_session['username'])
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+    url = """https://accounts.google.com
+            /o/oauth2/revoke?token=%s""" % login_session['access_token']
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     print('result is ')
@@ -360,9 +374,7 @@ def gdisconnect():
         del login_session['gplus_id']
         del login_session['username']
         del login_session['email']
-        response = make_response(json.dumps('Successfully disconnected.'), 200)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return redirect('/login')
     else:
         response = make_response(json.dumps(
             'Failed to revoke token for given user.'))
@@ -383,23 +395,18 @@ def fbconnect():
         'web']['app_id']
     app_secret = json.loads(
         open('fb_client_secrets.json', 'r').read())['web']['app_secret']
-    url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s' % (
+    url = """https://graph.facebook.com/oauth/access_token
+            ?grant_type=fb_exchange_token
+            &client_id=%s&client_secret=%s&fb_exchange_token=%s""" % (
         app_id, app_secret, access_token)
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
 
-    # Use token to get user info from API
-    #userinfo_url = "https://graph.facebook.com/v2.8/me"
-    '''
-        Due to the formatting for the result from the server token exchange we have to
-        split the token first on commas and select the first index which gives us the key : value
-        for the server access token then we split it on colons to pull out the actual token value
-        and replace the remaining quotes with nothing so that it can be used directly in the graph
-        api calls
-    '''
+    # formatting the token
     token = result.split(',')[0].split(':')[1].replace('"', '')
 
-    url = 'https://graph.facebook.com/v2.8/me?access_token=%s&fields=name,id,email' % token
+    url = """https://graph.facebook.com/v2.8/me
+            ?access_token=%s&fields=name,id,email""" % token
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
     # print "url sent for API access:%s"% url
@@ -414,14 +421,14 @@ def fbconnect():
 
     # see if user exists
     user_id = getUserID(login_session['email'])
-    if not user_id:
+    if user_id is None:
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
 
     output = ''
-    output += '<h1>Welcome, '
+    output += '<h3>Welcome, '
     output += login_session['username']
-    output += '!</h1>'
+    output += '!</h3>'
 
     flash("Now logged in as %s" % login_session['username'])
     return output
@@ -435,15 +442,13 @@ def fbdisconnect():
     url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (
         facebook_id, access_token)
     h = httplib2.Http()
-    result = h.request(url, 'DELETE')[1]
+    h.request(url, 'DELETE')[1]
 
     del login_session['username']
     del login_session['email']
     del login_session['facebook_id']
 
-    print(result)
-
-    return "you have been logged out"
+    return redirect('/login')
 
 # User Helper Functions
 
@@ -451,6 +456,9 @@ def fbdisconnect():
 def createUser(login_session):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
+
+    print(login_session['username'])
+    print(login_session['email'])
 
     newUser = User(name=login_session['username'], email=login_session[
                    'email'])
@@ -469,6 +477,9 @@ def getUserInfo(user_id):
 
 
 def getUserID(email):
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id

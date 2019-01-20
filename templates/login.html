@@ -22,6 +22,8 @@
         </div>
     </div>
 </div>
+<!-- Oauth code was written while taking the Udacity Full-stack Back-end courses. 
+Credit goes to Udacity for oauth implementation -->
 <script>
     function googleSignInCallback(authResult) {
         if (authResult['code']) {
@@ -35,7 +37,6 @@
                 data: authResult['code'],
                 success: function (result) {
                     if (result) {
-                        alert('success')
                         $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
                         setTimeout(function () {
                             window.location.href = "/";

@@ -29,7 +29,6 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True)
     category = Column(String)
-    food = relationship("Food")
 
     @property
     def serialize(self):
@@ -45,6 +44,7 @@ class Food(Base):
     name = Column(String)
     description = Column(String)
     category_id = Column(Integer, ForeignKey('categories.id'))
+    category = relationship(Category, backref='food')
 
     @property
     def serialize(self):

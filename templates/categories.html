@@ -70,6 +70,11 @@
                     alert("There was a problem fetching the categories.");
                 }
             },
+            statusCode: {
+                401: function () {
+                    alert('Not authorized. Please login');
+                }
+            },
             error: function (err) {
                 console.log(err);
                 alert("There was a problem fetching the categories.");
@@ -96,6 +101,11 @@
                 $('#select-group').attr('hidden', false);
                 $('#edit-group').attr('hidden', true);
             },
+            statusCode: {
+                401: function () {
+                    alert('Not authorized. Please login');
+                }
+            },
             error: function (err) {
                 console.log(err);
                 alert("There was a problem updating the category.");
@@ -116,6 +126,11 @@
             success: function (results) {
                 console.log("Delete successful.");
                 FetchCategories();
+            },
+            statusCode: {
+                401: function () {
+                    alert('Not authorized. Please login');
+                }
             },
             error: function (err) {
                 console.log(err);

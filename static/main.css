@@ -1,0 +1,4 @@
+.row.equal {
+    display: flex;
+    flex-wrap: wrap;
+  }
