@@ -30,7 +30,7 @@
                 <div class="form-group">
                     <h5>Edit Food</h5>
                     <label for="update-food">Food</label>
-                    <input id="update-food" name="update-food" class="form-control" type="text" />
+                    <input id="update-food" name="update-food" class="form-control" type="text" required="true" />
                 </div>
                 <div class="form-group">
                     <label for="update-category">Category</label>
@@ -47,11 +47,11 @@
         </form>
     </div>
     <div class="col-sm-5 col-lg-4 m-1 p-2 card">
-        <form id="new-form" method="POST" action="/api/v1/food">
+        <form id="new-form" target="_blank" method="POST" action="/api/v1/food">
             <div class="form-group">
                 <h5>New Food</h5>
                 <label for="food">Name</label>
-                <input id="insert-name" name="insert-name" class="form-control" type="text" />
+                <input id="insert-name" name="insert-name" class="form-control" type="text" required="true" />
             </div>
             <div class="form-group">
                 <label for="categories">Categories</label>
