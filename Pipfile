@@ -14,4 +14,4 @@ httplib2 = "*"
 oauth2client = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "2.7"

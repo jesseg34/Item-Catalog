@@ -180,6 +180,12 @@ def addFood():
         response.headers['Content-Type'] = 'application/json'
         return response
 
+    if (request.form['insert-category'] is None):
+        response = make_response(json.dumps(
+            'Food category id parameter required.'), 400)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
     food = Food(name=request.form['insert-name'],
                 description=request.form['insert-description'],
                 category_id=request.form['insert-category'])
