@@ -35,18 +35,18 @@ Endpoints
     `GET`, `POST`
 
     * **HTML Form Params**
-    **Required for POST:**
-    `category=[string]`
+        * **Required for POST:**
+        `category=[string]`
 
 * **URL**
-   /api/v1/categories/<id>
+   /api/v1/categories/:id
 
     * **Available Methods**
     `PUT`, `DELETE`
 
     * **HTML Form Params**
-    **For PUT:**
-    `update-category=[string]`
+        * **For PUT:**
+        `update-category=[string]`
 
 **Food**
 ----
@@ -57,24 +57,23 @@ Endpoints
     `GET`, `POST`
 
     * **HTML Form Params**
-    **Required for POST:**
-    `insert-name=[string]`
-    `insert-category=[int]`
-
-    **Optional for POST:**
-    `insert-description=[string]`
+        * **Required for POST:**
+        `insert-name=[string]`
+        `insert-category=[int]`
+        * **Optional for POST:**
+        `insert-description=[string]`
 
 * **URL**
-   /api/v1/categories/<id>
+   /api/v1/categories/:id
 
     * **Available Methods**
     `PUT`, `DELETE`
 
     * **HTML Form Params**
-    **For PUT:**
-    `insert-name=[string]`
-    `insert-category=[int]`
-    `insert-description=[string]`
+        * **For PUT:**
+        `insert-name=[string]`
+        `insert-category=[int]`
+        `insert-description=[string]`
 
 * **URL**
    /api/v1/categories/food
